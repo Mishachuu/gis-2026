@@ -50,3 +50,5 @@ package-lock.json
 *.sw?
 *.bak
 *.lck
+
+geoserver_data/tomcat_pass.txt

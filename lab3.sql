@@ -1,3 +1,10 @@
+DROP TABLE IF EXISTS my_buildings;
+DROP TABLE IF EXISTS links;
+DROP TABLE IF EXISTS overture_buildings;
+DROP TABLE IF EXISTS result;
+DROP TABLE IF EXISTS osm_data;
+DROP TABLE IF EXISTS smth_data;
+
 INSTALL spatial;
 INSTALL httpfs;
 
@@ -83,13 +90,19 @@ COPY (
             temp.geometry,
             temp.id,
             CASE
-                WHEN osm.geom IS NOT NULL THEN 'my'
-                WHEN list_contains(list_transform(temp.sources, s -> s.dataset), 'OpenStreetMap') THEN 'osm'
+                WHEN osm.user = 'sasori707' THEN 'my'
+                WHEN list_contains(
+                    list_transform(temp.sources, lambda s: s.dataset),
+                    'OpenStreetMap'
+                ) THEN 'osm'
                 ELSE 'ml'
             END AS source_type
         FROM smth_data temp
         LEFT JOIN osm_data osm
             ON try(ST_Intersects(osm.geom, ST_SetCRS(temp.geometry, 'EPSG:4326'))) = true
+        ORDER BY
+            temp.id,
+            (osm.user = 'sasori707') DESC NULLS LAST
     )
 )
 TO 'client/public/overture.json'

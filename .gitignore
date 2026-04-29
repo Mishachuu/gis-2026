@@ -52,3 +52,4 @@ package-lock.json
 *.lck
 
 geoserver_data/tomcat_pass.txt
+my.db

@@ -6,18 +6,30 @@ import TileLayer from 'ol/layer/Tile'
 import OSM from 'ol/source/OSM'
 import ImageLayer from 'ol/layer/Image'
 import ImageWMS from 'ol/source/ImageWMS'
+import VectorLayer from 'ol/layer/Vector'
+import VectorSource from 'ol/source/Vector'
+import GeoJSON from 'ol/format/GeoJSON'
 import { fromLonLat } from 'ol/proj'
+import { applyStyle } from 'ol-mapbox-style'
 
 function App() {
   const mapRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    const vectorLayer = new VectorLayer({
+      source: new VectorSource({
+        url: '/overture.json',
+        format: new GeoJSON()
+      })
+    })
+
     const map = new Map({
       target: mapRef.current!,
       layers: [
         new TileLayer({
           source: new OSM()
         }),
+
         new ImageLayer({
           source: new ImageWMS({
             url: 'http://localhost:8080/geoserver/gis/wms',
@@ -29,12 +41,42 @@ function App() {
             ratio: 1,
             serverType: 'geoserver'
           })
-        })
+        }),
+
+        vectorLayer
       ],
       view: new View({
-  center: fromLonLat([50.315, 53.4197]),
-  zoom: 16
-})
+        center: fromLonLat([50.315, 53.4197]),
+        zoom: 16
+      })
+    })
+
+    applyStyle(vectorLayer, {
+      version: 8,
+      sources: {
+        overture: {
+          type: 'geojson',
+          data: '/overture.json'
+        }
+      },
+      layers: [
+        {
+          id: 'buildings',
+          type: 'fill',
+          source: 'overture',
+          paint: {
+            'fill-color': [
+              'match',
+              ['get', 'source_type'],
+              'my', '#00ff00',
+              'osm', '#0000ff',
+              'ml', '#ffa500',
+              '#cccccc'
+            ],
+            'fill-opacity': 0.6
+          }
+        }
+      ]
     })
 
     return () => map.setTarget(undefined)
